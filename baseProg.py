@@ -2,6 +2,7 @@ from controller import Robot,GPS,Camera
 import cv2
 import numpy as np
 import random
+import struct
 timeStep = 32
 max_velocity = 6.28
 robot = Robot()
@@ -23,6 +24,9 @@ camera = robot.getDevice("camera_centre")
 cameraR = robot.getDevice("camera_left")
 cameraL = robot.getDevice("camera_right")
 gps = robot.getDevice("gps sensor")
+emitter = robot.getDevice("emitter")
+receiver = robot.getDevice("receiver")
+
 
 #enabling sensors
 s1.enable(timeStep)
@@ -33,7 +37,7 @@ camera.enable(timeStep)
 cameraR.enable(timeStep)
 cameraL.enable(timeStep)
 gps.enable(timeStep)
-
+receiver.enable(timeStep)
 #windows setup
 cv2.namedWindow('settings', cv2.WINDOW_NORMAL)
 cv2.createTrackbar('x', 'settings', 4,20, nothing)
@@ -42,22 +46,14 @@ cv2.createTrackbar('scale', 'settings', 6,10, nothing)
 start = robot.getTime()
 
 #templates setup
-if(False):
-    templateU = cv2.imread('C:\\Users\\user\\Downloads\\robocup\\U.png', cv2.IMREAD_GRAYSCALE)
-    templateH = cv2.imread('C:\\Users\\user\\Downloads\\robocup\\H.png', cv2.IMREAD_GRAYSCALE)
-    templateS = cv2.imread('C:\\Users\\user\\Downloads\\robocup\\S.png', cv2.IMREAD_GRAYSCALE)
-    templateCOR = cv2.imread('C:\\Users\\user\\Downloads\\robocup\\COR.png', cv2.IMREAD_GRAYSCALE)
-    templateOP = cv2.imread('C:\\Users\\user\\Downloads\\robocup\\OP.png', cv2.IMREAD_GRAYSCALE)
-    templateFG = cv2.imread('C:\\Users\\user\\Downloads\\robocup\\FG.png', cv2.IMREAD_GRAYSCALE)
-    templatePOI = cv2.imread('C:\\Users\\user\\Downloads\\robocup\\POI.png', cv2.IMREAD_GRAYSCALE)
-else:
-    templateU = cv2.imread('C:\\Users\\bolshakovae.25\\Downloads\\robocup\\U.png', cv2.IMREAD_GRAYSCALE)
-    templateH = cv2.imread('C:\\Users\\bolshakovae.25\\Downloads\\robocup\\H.png', cv2.IMREAD_GRAYSCALE)
-    templateS = cv2.imread('C:\\Users\\bolshakovae.25\\Downloads\\robocup\\S.png', cv2.IMREAD_GRAYSCALE)
-    templateCOR = cv2.imread('C:\\Users\\bolshakovae.25\\Downloads\\robocup\\COR.png', cv2.IMREAD_GRAYSCALE)
-    templateOP = cv2.imread('C:\\Users\\bolshakovae.25\\Downloads\\robocup\\OP.png', cv2.IMREAD_GRAYSCALE)
-    templateFG = cv2.imread('C:\\Users\\bolshakovae.25\\Downloads\\robocup\\FG.png', cv2.IMREAD_GRAYSCALE)
-    templatePOI = cv2.imread('C:\\Users\\bolshakovae.25\\Downloads\\robocup\\POI.png', cv2.IMREAD_GRAYSCALE)    
+
+templateU = cv2.imread('C://Users//TBG//Documents//robocup rescue maze simulation//U.png', cv2.IMREAD_GRAYSCALE)
+templateH = cv2.imread('C://Users//TBG//Documents//robocup rescue maze simulation//H.png', cv2.IMREAD_GRAYSCALE)
+templateS = cv2.imread('C://Users//TBG//Documents//robocup rescue maze simulation//S.png', cv2.IMREAD_GRAYSCALE)
+templateCOR = cv2.imread('C://Users//TBG//Documents//robocup rescue maze simulation//COR.png', cv2.IMREAD_GRAYSCALE)
+templateOP = cv2.imread('C://Users//TBG//Documents//robocup rescue maze simulation//OP.png', cv2.IMREAD_GRAYSCALE)
+templateFG = cv2.imread('C://Users//TBG//Documents//robocup rescue maze simulation//FG.png', cv2.IMREAD_GRAYSCALE)
+templatePOI = cv2.imread('C://Users//TBG//Documents//robocup rescue maze simulation//POI.png', cv2.IMREAD_GRAYSCALE)    
 templateT = templateS
 
 
@@ -209,10 +205,26 @@ def templateRec():
     print(recognizedSighn)  
                         
 while robot.step(timeStep) != -1:
-    
+    #reading and normalising distance sensors
     sN1 = s1.getValue()/0.8*100
     sN2 = s2.getValue()/0.8*100
     sN3 = s3.getValue()/0.8*100
+    #recieving and emmiting data
+    if robot.getTime() - lastRequestTime > 1:
+        message = struct.pack('c', 'G'.encode()) # Send game info request once a second
+        emitter.send(message)
+        lastRequestTime = robot.getTime()
+    
+    if receiver.getQueueLength() > 0: # Check if receiver queue size is not empty
+        receivedData = receiver.getBytes()
+        # Get length of bytes
+        rDataLen = len(receivedData)
+        if rDataLen == 12:
+            tup = struct.unpack('c f i', receivedData)
+            if tup[0].decode("utf-8") == 'G':
+                print(f'Game Score: {tup[1]}  Remaining time: {tup[2]}')
+        receiver.nextPacket() # Discard the current data packet
+
     #gps read
     x = int(gps.getValues()[0]*100)
     z = int(gps.getValues()[2]*100)
@@ -313,8 +325,8 @@ while robot.step(timeStep) != -1:
     #recognizing signs
     templateRec()
     
-    wheel1.setVelocity(0)#speed1)              
-    wheel2.setVelocity(0)#speed2)
+    wheel1.setVelocity(3.14)#speed1)              
+    wheel2.setVelocity(3.14)#speed2)
     
     #imshow
     cv2.imshow("frame", frame)
