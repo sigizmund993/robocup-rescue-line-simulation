@@ -131,14 +131,7 @@ turnTimer = 0.6
    
 while robot.step(timeStep) != -1:
     #reading and normalising distance sensors
-    victimType = bytes('H', "utf-8") # The victim type being sent is the letter 'H' for harmed victim
-
-    x = int(gps.getValues()[0]*100) # Get the current gps position of the robot
-    y = int(gps.getValues()[2]*100) # We will use these coordinates as an estimate for the victim's position
-
-    message = struct.pack("i i c", x, y, victimType) # Pack the message.
-        
-    emitter.send(message)
+    
     sN1 = s1.getValue()/0.8*100
     sN2 = s2.getValue()/0.8*100
     sN3 = s3.getValue()/0.8*100
@@ -153,8 +146,13 @@ while robot.step(timeStep) != -1:
     frameR = cv2.cvtColor(np.frombuffer(cameraR.getImage(), np.uint8).reshape((cameraR.getHeight(), cameraR.getWidth(), 4)), cv2.COLOR_BGRA2BGR)
     frameL = cv2.cvtColor(np.frombuffer(cameraL.getImage(), np.uint8).reshape((cameraL.getHeight(), cameraL.getWidth(), 4)), cv2.COLOR_BGRA2BGR)
     #
+    hsv_min = np.array((53, 0, 0), np.uint8)
+    hsv_max = np.array((83, 255, 255), np.uint8)
     
-    
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV )
+    thresh = cv2.inRange(hsv, hsv_min, hsv_max)
+    cv2.imwrite(r"C://Users//TBG//Documents//frame.png",frame)
+
     wheel1.setVelocity(0)              
     wheel2.setVelocity(0)
     #imshow

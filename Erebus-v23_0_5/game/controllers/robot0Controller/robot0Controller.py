@@ -276,6 +276,17 @@ while robot.step(timeStep) != -1:
     frameR = cv2.cvtColor(np.frombuffer(cameraR.getImage(), np.uint8).reshape((cameraR.getHeight(), cameraR.getWidth(), 4)), cv2.COLOR_BGRA2BGR)
     frameL = cv2.cvtColor(np.frombuffer(cameraL.getImage(), np.uint8).reshape((cameraL.getHeight(), cameraL.getWidth(), 4)), cv2.COLOR_BGRA2BGR)
     #
+    min_p = (0, 0, 50)
+    max_p = (215, 215, 215)
+    # применяем фильтр, делаем бинаризацию
+    img_g = cv2.inRange(frame, min_p, max_p)
+
+    cv2.imshow('img', img_g)
+    ready = cv2.bitwise_and(frame, frame, mask = img_g)
+    cv2.imshow('results', ready)
+    cv2.imwrite(r"C://Users//TBG//Documents//frame.png",ready)
+
+
     print(frame.shape)
     speed1 = 0
     speed2 = 0
@@ -323,7 +334,7 @@ while robot.step(timeStep) != -1:
     
     wheel1.setVelocity(speed1)              
     wheel2.setVelocity(speed2)
-    
+    print(mapList)
     #imshow
     cv2.imshow("frame", frame)
     cv2.imshow("frameR", frameR)

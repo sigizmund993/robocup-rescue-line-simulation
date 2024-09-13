@@ -6,6 +6,7 @@ maximizedDockId: -1
 centralWidgetVisible: 1
 orthographicViewHeight: 1
 textFiles: -1
+robotWindow: robot
 globalOptionalRendering: DistanceSensorRays::CameraFrustums
 consoles: Console:All:All
 renderingDevicePerspectives: Erebus_Bot:camera_centre;1;1;0;0
