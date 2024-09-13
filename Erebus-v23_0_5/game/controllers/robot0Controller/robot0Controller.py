@@ -1,4 +1,4 @@
-from controller import Robot,GPS,Camera
+from controller import Robot,GPS,Camera,InertialUnit
 import cv2
 import numpy as np
 import random
@@ -26,7 +26,7 @@ cameraL = robot.getDevice("camera_right")
 gps = robot.getDevice("gps sensor")
 emitter = robot.getDevice("emitter")
 receiver = robot.getDevice("receiver")
-gyro = robot.getDevice("gyro")
+imu = robot.getDevice("inertial_unit")
 
 #enabling sensors
 s1.enable(timeStep)
@@ -38,7 +38,7 @@ cameraR.enable(timeStep)
 cameraL.enable(timeStep)
 gps.enable(timeStep)
 receiver.enable(timeStep)
-gyro.enable(timeStep)
+imu.enable(timeStep)
 #windows setup
 cv2.namedWindow('settings', cv2.WINDOW_NORMAL)
 cv2.createTrackbar('x', 'settings', 4,20, nothing)
@@ -121,47 +121,45 @@ speed2 = 0
 mapShow = mapList
 recognizedSighn = 'none'
 lastRequestTime = robot.getTime()
+turnRightTimer = 0
+turnLeftTimer = 0
+
 #color def
 def colorRec():
     if(sensColor[0] == black[0] and sensColor[1] == black[1] and sensColor[2] == black[2]):
         print("BLACK)))")
         recognizedColor = 'black'
-        if(mapList[zCell][xCell] != 1):
-            mapList[zCell][xCell] = '2'
+        mapList[zCell][xCell] = '2'
     elif(sensColor[0] == green[0] and sensColor[1] == green[1] and sensColor[2] == green[2]):
         print("green")
         recognizedColor = 'green'
-        if(mapList[zCell][xCell] != 1):
-            mapList[zCell][xCell] = '9'
+        mapList[zCell][xCell] = '9'
     elif(sensColor[0] == red[0] and sensColor[1] == red[1] and sensColor[2] == red[2]):
         print("red")
         recognizedColor = 'red'
-        if(mapList[zCell][xCell] != 1):
-            mapList[zCell][xCell] = '8'
+        mapList[zCell][xCell] = '8'
     elif(sensColor[0] >= silverMin[0] and sensColor[1] >= silverMin[1] and sensColor[2] >= silverMin[2] and sensColor[0] <= silverMax[0] and sensColor[1] <= silverMax[1] and sensColor[2] <= silverMax[2]):
         print("silver")
         recognizedColor = 'silver'
-        if(mapList[zCell][xCell] != 1):
-            mapList[zCell][xCell] = '4'
+        mapList[zCell][xCell] = '4'
     elif(sensColor[0] == brown[0] and sensColor[1] == brown[1] and sensColor[2] == brown[2]):
         print("brown")
         recognizedColor = 'brown'
-        if(mapList[zCell][xCell] != 1):
-            mapList[zCell][xCell] = '3'
+        mapList[zCell][xCell] = '3'
     elif(sensColor[0] == blue[0] and sensColor[1] == blue[1] and sensColor[2] == blue[2]):
         print("blue")
         recognizedColor = 'blue'
-        if(mapList[zCell][xCell] != 1):
-            mapList[zCell][xCell] = '6'
+        mapList[zCell][xCell] = '6'
     elif(sensColor[0] == purple[0] and sensColor[1] == purple[1] and sensColor[2] == purple[2]):
         print("purple")
         recognizedColor = 'purple'
-        if(mapList[zCell][xCell] != 1):
-            mapList[zCell][xCell] = '7'
+        mapList[zCell][xCell] = '7'
     else:
         #print("None")
         recognizedColor = 'none'
+recognizedCamera = 0
 def templateRec():
+    global recognizedCamera
     leastScale = 30
     for t in range(6):
         if(t==0):
@@ -210,20 +208,18 @@ def templateRec():
                     print(text)
                     recognizedSighn = text
                     mapList[zCell][xCell] = text
-    #print(leastScale)
-    #print(recognizedSighn)  
+                    recognizedCamera = j
+                    if(leastScale>i):leastScale = i
+    print(leastScale)
+    print(recognizedSighn)  
+    print(recognizedCamera)
            
 while robot.step(timeStep) != -1:
-    print(int(gyro.getValues()[0]*10000000))
     #reading and normalising distance sensors
     sN1 = s1.getValue()/0.8*100
     sN2 = s2.getValue()/0.8*100
     sN3 = s3.getValue()/0.8*100
-    #recieving and emmiting data
-    if robot.getTime() - lastRequestTime > 1:
-        message = struct.pack('c', 'A'.encode()) # Send game info request once a second
-        emitter.send(message)
-        lastRequestTime = robot.getTime()
+    if(robot.getTime()%1 == 0):print(".")
 
     #gps read
     x = int(gps.getValues()[0]*100)
@@ -276,13 +272,24 @@ while robot.step(timeStep) != -1:
     err=targetLength-s1.getValue()
     
     p=err*k1
-    d=0#(err-errold)*k2
+    d=0#(err-errold)*k
     q=p+d
     
     speed1 = 0
     speed2 = 0
-    speed1 = 4.71-q
-    speed2 = 4.71+q
+    # speed1 = 4.71-q
+    # speed2 = 4.71+q
+    templateRec()
+    if(recognizedCamera == 2):
+        turnRightTimer = robot.getTime()
+    if(robot.getTime()<turnRightTimer+0.2):
+        speed1 = -3.14
+        speed2 = 3.14
+    if(recognizedCamera == 1):
+        turnLeftTimer = robot.getTime()
+    if(robot.getTime()<turnLeftTimer+0.2):
+        speed1 = 3.14
+        speed2 = -3.14
     if(speed1>max_velocity):speed1=max_velocity
     if(speed2>max_velocity):speed2=max_velocity
     if(speed1<-max_velocity):speed1=-max_velocity
@@ -296,17 +303,17 @@ while robot.step(timeStep) != -1:
     if(robot.getTime() > wallTime + 0.3):
         wallTime = 0
     #failsave
-    if(z == zOld and x == xOld): cntStop+=1
-    else: cntStop = 0
-    if(cntStop>100):
-        goBackTime = robot.getTime()
-    if(robot.getTime() < goBackTime + 0.6):
-        speed1 = -6.28
-        speed2 = -6.28
-    if(robot.getTime() > goBackTime + 0.6):
-        goBackTime = 0
-    xOld = x
-    zOld = z
+    # if(z == zOld and x == xOld): cntStop+=1
+    # else: cntStop = 0
+    # if(cntStop>100):
+    #     goBackTime = robot.getTime()
+    # if(robot.getTime() < goBackTime + 0.6):
+    #     speed1 = -6.28
+    #     speed2 = -6.28
+    # if(robot.getTime() > goBackTime + 0.6):
+    #     goBackTime = 0
+    # xOld = x
+    # zOld = z
     #black hole  
     if(recognizedColor == 'black'):
         print("BLACK)))")
@@ -317,15 +324,15 @@ while robot.step(timeStep) != -1:
     if(robot.getTime() > blackTime+0.6):
         blackTime = 0
     #random
-    if(int(robot.getTime()) % 50 ==0):kMod = random.choice([1,-1])
-    if(int(robot.getTime())%10==0 and random.randint(0,9)==5):
-        wall = True
-        wallTime = robot.getTime()
+    # if(int(robot.getTime()) % 50 ==0):kMod = random.choice([1,-1])
+    # if(int(robot.getTime())%10==0 and random.randint(0,9)==5):
+    #     wall = True
+    #     wallTime = robot.getTime()
     #recognizing signs
-    templateRec()
     
-    wheel1.setVelocity(0)#speed1)              
-    wheel2.setVelocity(0)#speed2)
+    
+    wheel1.setVelocity(speed1)              
+    wheel2.setVelocity(speed2)
     
     #imshow
     cv2.imshow("frame", frame)

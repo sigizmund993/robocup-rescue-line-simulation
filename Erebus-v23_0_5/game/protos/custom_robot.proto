@@ -479,11 +479,11 @@ Robot {
             
             
             Transform {
-            translation -0.0318 0.008499999999999999 -0.0005
+            translation -0.032 0.0485 0.0005
             rotation 0 0.71 0.71 3.14
             children [
             DistanceSensor {
-            name "distance sensor1"
+            name "distance sensor5"
             lookupTable [
                 0 0 0
                 0.8 0.8 0
@@ -500,11 +500,11 @@ Robot {
             }
             
             Transform {
-            translation 0.0 0.047 -0.0349
+            translation 0.0 0.0485 -0.0349
             rotation -0.58 0.58 0.58 2.09
             children [
             DistanceSensor {
-            name "distance sensor2"
+            name "distance sensor0"
             lookupTable [
                 0 0 0
                 0.8 0.8 0
@@ -521,11 +521,11 @@ Robot {
             }
             
             Transform {
-            translation 0.0323 0.008499999999999999 0.0001
+            translation 0.032 0.0485 0.0005
             rotation 1 0 0 4.71
             children [
             DistanceSensor {
-            name "distance sensor3"
+            name "distance sensor2"
             lookupTable [
                 0 0 0
                 0.8 0.8 0
@@ -752,12 +752,96 @@ Robot {
             ]
             }
             Transform {
-            translation 0.0 0.028999999999999998 0.0
+            translation -0.023 0.0485 -0.022
+            rotation -0.26 0.68 0.68 2.62
+            children [
+            DistanceSensor {
+            name "distance sensor6"
+            lookupTable [
+                0 0 0
+                0.8 0.8 0
+            ]
+            type "infra-red"
+            rotation 1 0 0 1.56826
+            physics Physics {
+            }
+            boundingObject Sphere {
+                radius 0.003
+            }
+            }
+            ]
+            }
+            
+            Transform {
+            translation 0.023 0.0485 -0.022
+            rotation -0.86 0.36 0.36 1.72
+            children [
+            DistanceSensor {
+            name "distance sensor1"
+            lookupTable [
+                0 0 0
+                0.8 0.8 0
+            ]
+            type "infra-red"
+            rotation 1 0 0 1.56826
+            physics Physics {
+            }
+            boundingObject Sphere {
+                radius 0.003
+            }
+            }
+            ]
+            }
+            
+            Transform {
+            translation -0.023 0.0485 0.022
+            rotation 0.31 0.67 0.67 3.74
+            children [
+            DistanceSensor {
+            name "distance sensor4"
+            lookupTable [
+                0 0 0
+                0.8 0.8 0
+            ]
+            type "infra-red"
+            rotation 1 0 0 1.56826
+            physics Physics {
+            }
+            boundingObject Sphere {
+                radius 0.003
+            }
+            }
+            ]
+            }
+            
+            Transform {
+            translation 0.023 0.0485 0.022
+            rotation 0.89 0.32 0.32 4.6
+            children [
+            DistanceSensor {
+            name "distance sensor3"
+            lookupTable [
+                0 0 0
+                0.8 0.8 0
+            ]
+            type "infra-red"
+            rotation 1 0 0 1.56826
+            physics Physics {
+            }
+            boundingObject Sphere {
+                radius 0.003
+            }
+            }
+            ]
+            }
+            
+            Transform {
+            translation 0.0 0.0185 0.0
             rotation -0.5858 0.5858 0.5858 2.09
             children [
-            Gyro {
+            InertialUnit {
             rotation 0.577 -0.577 -0.577 2.09
-            name "gyro"
+            name "inertial_unit"
             physics Physics {
             }
             boundingObject Sphere {
