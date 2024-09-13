@@ -124,7 +124,8 @@ recognizedSighn = 'none'
 lastRequestTime = robot.getTime()
 turnRightTimer = 0
 turnLeftTimer = 0
-
+goForwardTimer = 0
+turnTimer = 0.6
 #color def
 def colorRec():
     if(sensColor[0] == black[0] and sensColor[1] == black[1] and sensColor[2] == black[2]):
@@ -158,9 +159,10 @@ def colorRec():
     else:
         #print("None")
         recognizedColor = 'none'
-recognizedCamera = 0
+recognizedCamera = 4
 def templateRec():
     global recognizedCamera
+    recognizedCamera = 4
     leastScale = 30
     for t in range(6):
         if(t==0):
@@ -211,12 +213,18 @@ def templateRec():
                     mapList[zCell][xCell] = text
                     recognizedCamera = j
                     if(leastScale>i):leastScale = i
+                    posX = int(gps.getValues()[0] * 100)
+                    posZ = int(gps.getValues()[2] * 100)
+                    message = struct.pack("i i c", posX, posZ, bytes(text, "utf-8"))
+                    print('reported!')
+                    emitter.send(message)
     print(leastScale)
     print(recognizedSighn)  
     print(recognizedCamera)
            
 while robot.step(timeStep) != -1:
     #reading and normalising distance sensors
+    
     sN1 = s1.getValue()/0.8*100
     sN2 = s2.getValue()/0.8*100
     sN3 = s3.getValue()/0.8*100
@@ -268,25 +276,29 @@ while robot.step(timeStep) != -1:
     frameR = cv2.cvtColor(np.frombuffer(cameraR.getImage(), np.uint8).reshape((cameraR.getHeight(), cameraR.getWidth(), 4)), cv2.COLOR_BGRA2BGR)
     frameL = cv2.cvtColor(np.frombuffer(cameraL.getImage(), np.uint8).reshape((cameraL.getHeight(), cameraL.getWidth(), 4)), cv2.COLOR_BGRA2BGR)
     #
-
+    print(frame.shape)
     speed1 = 0
     speed2 = 0
 
     templateRec()
     if(recognizedCamera == 2):
         turnRightTimer = robot.getTime()
-    if(robot.getTime()<turnRightTimer+0.2):
+    if(robot.getTime()<turnRightTimer+turnTimer):
         speed1 = -3.14
         speed2 = 3.14
     if(recognizedCamera == 1):
         turnLeftTimer = robot.getTime()
-    if(robot.getTime()<turnLeftTimer+0.2):
+    if(robot.getTime()<turnLeftTimer+turnTimer):
         speed1 = 3.14
         speed2 = -3.14
     if(recognizedCamera == 0):
+        goForwardTimer = robot.getTime()
+    if(robot.getTime()<goForwardTimer+0.4):
+        speed1 = 0
+        speed2 = 0
         
-
-
+        
+        
     #failsave
     # if(z == zOld and x == xOld): cntStop+=1
     # else: cntStop = 0
