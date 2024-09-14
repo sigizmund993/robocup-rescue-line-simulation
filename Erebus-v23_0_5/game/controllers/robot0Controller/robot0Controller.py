@@ -276,22 +276,40 @@ while robot.step(timeStep) != -1:
     frameR = cv2.cvtColor(np.frombuffer(cameraR.getImage(), np.uint8).reshape((cameraR.getHeight(), cameraR.getWidth(), 4)), cv2.COLOR_BGRA2BGR)
     frameL = cv2.cvtColor(np.frombuffer(cameraL.getImage(), np.uint8).reshape((cameraL.getHeight(), cameraL.getWidth(), 4)), cv2.COLOR_BGRA2BGR)
     #
-    min_p = (0, 0, 50)
+    min_p = (0, 0, 150)
     max_p = (215, 215, 215)
     # применяем фильтр, делаем бинаризацию
     img_g = cv2.inRange(frame, min_p, max_p)
 
     cv2.imshow('img', img_g)
-    ready = cv2.bitwise_and(frame, frame, mask = img_g)
-    cv2.imshow('results', ready)
-    cv2.imwrite(r"C://Users//TBG//Documents//frame.png",ready)
+    frameN = cv2.bitwise_and(frame, frame, mask = img_g)
+    frameN = cv2.cvtColor(frameN, cv2.COLOR_BGR2GRAY)
+    contours, hierarchy = cv2.findContours(frameN, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    signN = 'none'
+    minArea = 100000
+   
+    for i in contours:
+        
+        try:
+            pixelColor = frame[i[0][0][1],i[0][0][0]-1]
+            pixelColor2 = frame[i[3][0][1]+1,i[3][0][0]]
+        except:
+            pixelColor  = [0,0,0]
+            pixelColor2 = [0,0,0]
+        if(i[0][0][0] != 0 and 
+           ((pixelColor[0] == 32 and pixelColor[1] == 30 and pixelColor[2] == 18) or (pixelColor[0] == 139 and pixelColor[1] == 127 and pixelColor[2] == 61))
+           and ((pixelColor2[0] == 32 and pixelColor2[1] == 30 and pixelColor2[2] == 18) or (pixelColor2[0] == 139 and pixelColor2[1] == 127 and pixelColor2[2] == 61))):
+            cv2.drawContours(frame, i, -1, (0,255,0), 1)
+          
+    
+    cv2.imwrite(r"C://Users//TBG//Documents//frame.png",frame)
 
 
-    print(frame.shape)
+    
     speed1 = 0
     speed2 = 0
 
-    templateRec()
+    #templateRec()
     if(recognizedCamera == 2):
         turnRightTimer = robot.getTime()
     if(robot.getTime()<turnRightTimer+turnTimer):
@@ -334,7 +352,7 @@ while robot.step(timeStep) != -1:
     
     wheel1.setVelocity(speed1)              
     wheel2.setVelocity(speed2)
-    print(mapList)
+    #print(mapList)
     #imshow
     cv2.imshow("frame", frame)
     cv2.imshow("frameR", frameR)
